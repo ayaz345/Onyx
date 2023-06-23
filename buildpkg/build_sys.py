@@ -10,10 +10,10 @@ onyx_root = ""
 
 def generate_meson_cross(clang_path, onyx_arch):
 	global onyx_root
-	onyx_triple = onyx_arch + "-onyx"
-	cc = onyx_triple + "-gcc"
-	cxx = onyx_triple + "-g++"
-	strip = onyx_triple + "-strip"
+	onyx_triple = f"{onyx_arch}-onyx"
+	cc = f"{onyx_triple}-gcc"
+	cxx = f"{onyx_triple}-g++"
+	strip = f"{onyx_triple}-strip"
 	sysroot = os.path.join(onyx_root, "sysroot")
 	pkgconfig = os.path.join(onyx_root, "buildpkg/onyx-pkg-config")
 	cflags = f"'--sysroot={sysroot}'"
@@ -23,9 +23,9 @@ def generate_meson_cross(clang_path, onyx_arch):
 		cxx = os.path.join(clang_path, "bin/clang++")
 		strip = os.path.join(clang_path, "bin/llvm-strip")
 		cflags += f", '--target={onyx_arch}-unknown-onyx'"
-	
+
 	pkg_config_libdir = os.path.join(sysroot, "usr/lib/pkgconfig")
- 
+
 	temp = tempfile.NamedTemporaryFile()
 	temp.write(f"""[host_machine]
 system = 'onyx'
@@ -71,11 +71,8 @@ class Package:
 		self.package_path = os.path.join(package_tree, name)
 		with open(os.path.join(self.package_path, "meta.json")) as metafile:
 			self.data = json.load(metafile)
-		
-		if self.is_pkg_group():
-			self.deps = self.data["members"]
-		else:
-			self.deps = self.data["deps"] 
+
+		self.deps = self.data["members"] if self.is_pkg_group() else self.data["deps"] 
 
 	def get_deps(self):
 		return self.deps
@@ -86,14 +83,10 @@ class Package:
 	def satisfies_soname(self, soname):
 		if "provides" not in self.data:
 			return False
-		
+
 		provides = self.data["provides"]
 
-		for p in provides:
-			if p["soname"].startswith(soname):
-				return True
-		
-		return False
+		return any(p["soname"].startswith(soname) for p in provides)
 	
 	def satisfy_soname(self, packages, soname):
 		deps = self.get_deps()

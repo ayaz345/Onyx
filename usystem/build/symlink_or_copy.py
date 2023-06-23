@@ -28,15 +28,14 @@ def main():
                 os.makedirs(dir)
             os.symlink(args.source, args.output)
         except OSError as e:
-            if e.errno == errno.EEXIST:
-                os.remove(args.output)
-                os.symlink(args.source, args.output)
-            else:
+            if e.errno != errno.EEXIST:
                 raise
+            os.remove(args.output)
+            os.symlink(args.source, args.output)
     else:
         import shutil
-        output = args.output + ".exe"
-        source = args.source + ".exe"
+        output = f"{args.output}.exe"
+        source = f"{args.source}.exe"
         shutil.copyfile(os.path.join(os.path.dirname(output), source), output)
 
     open(args.stamp, 'w') # Update mtime on stamp file.

@@ -27,12 +27,12 @@ special_syscalls = {"sigreturn": "__NR_rt_sigreturn", "sigaction": "__NR_rt_siga
                     "sigsuspend": "__NR_rt_sigsuspend", "pread": "__NR_pread64", "pwrite": "__NR_pwrite64"}
 
 def find_number(name):
-    wanted_define = special_syscalls.get(name, "__NR_" + name)
+    wanted_define = special_syscalls.get(name, f"__NR_{name}")
 
     for node in syscalls_tu.cursor.get_children():
         if not node.kind.is_preprocessing():
             continue
-        
+
         if not node.spelling.startswith("__NR"):
             continue
 
@@ -42,35 +42,32 @@ def find_number(name):
 
             if c.kind == clang.cindex.TokenKind.IDENTIFIER:
                 sysname = c.spelling
-            
+
             if c.kind == clang.cindex.TokenKind.LITERAL:
                 nr = int(c.spelling)
 
         if not sysname:
             print("Error: Bad syscall.h")
             exit(1)
-        
-        if not sysname == wanted_define:
+
+        if sysname != wanted_define:
             continue
-        
+
         print(f'{sysname} has syscall number {nr}')
 
         return nr
 
-    print("Possibly bad syscall " + name)
+    print(f"Possibly bad syscall {name}")
 
 def parse_syscall(node):
     args = node.get_arguments()
 
-    arg_list = []
     name = node.spelling[len("sys_"):]
 
     if name in syscalls_that_dont_exist:
         return
 
-    for a in args:
-        arg_list.append((a.type.spelling, a.spelling))
-    
+    arg_list = [(a.type.spelling, a.spelling) for a in args]
     syscall_list.append(Syscall(name, arg_list, node.result_type.spelling, find_number(name)))
 
 def find_syscall_defs(node):

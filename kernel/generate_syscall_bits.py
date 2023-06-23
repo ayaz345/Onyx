@@ -36,7 +36,7 @@ def output_syscall_thunk(syscall, output_file):
         if argnum != syscall.nr_args:
             syscall_declare += ", "
 
-    
+
     syscall_declare += ");"
 
     output_file.write(f'{syscall_declare}\n\n')
@@ -47,8 +47,8 @@ def output_syscall_thunk(syscall, output_file):
     # Note: If the return type is void, we can't have a return statement
 
     if syscall.return_type != "void":
-        thunk_function += f"return (unsigned long) "
-    
+        thunk_function += "return (unsigned long) "
+
     thunk_function += f'sys_{syscall.name}('
     argnum = 0
     for arg in syscall.args:
@@ -59,9 +59,9 @@ def output_syscall_thunk(syscall, output_file):
 
         if argnum != syscall.nr_args:
             thunk_function += ", "
-    
+
     thunk_function += ");\n"
-    
+
     # Dummy return since all thunks return an unsigned long
     if syscall.return_type == "void":
         thunk_function += "return 0;"
